@@ -520,9 +520,17 @@ def main():
         for export in configfile.get('exports'):
             try:
                 if export.get('enabled', False):
-                    export_load = importlib.import_module("exports." + export.get('name'))
-                    logging.info(f"Loading Export: exports\{export.get('name')}")
-                    exports.append(getattr(export_load, "export_" + export.get('name'))())
+                    plugin = export.get('module')
+                    if plugin is not None:
+                        module = export_name = plugin
+                        klass = 'Export'
+                    else:
+                        export_name = export.get('name')
+                        module = f"exports.{export_name}"
+                        klass = f"export_{export_name}"
+                    export_load = importlib.import_module(module)
+                    logging.info("Loading Export: {}", export_name)
+                    exports.append(getattr(export_load, klass)())
                     retval = exports[-1].configure(export, inverter)
             except Exception as err:
                 logging.error(f"Failed loading export: {err}" +
